@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комментарии · ИКИ страницы</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Comfortaa", sans-serif;
+        }
+        body {
+            background: rgba(171, 24, 3, 1);
+            display: flex;
+            justify-content: center;
+            padding: 2rem 1.2rem;
+        }
+        .main {
+            max-width: 900px;
+            width: 100%;
+        }
+        .top-bar {
+            background: rgba(171, 24, 3, 1);
+            
+            padding: 0.8rem 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            
+        }
+        
+        .iki-meter span {
+            color: white;
+			
+            font-size: 2.5rem;
+            margin-right: 0.8rem;
+        }
+		
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .profile-btn {
+            background: #eef3fc;
+            padding: 0.5rem 1.5rem 0.5rem 1rem;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            border: 1px solid #bacde8;
+        }
+        
+        .login-btn {
+            background: #1f2e50;
+            color: white;
+            border: none;
+            padding: 0.6rem 2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .login-required {
+            background: #ffedea;
+            border-radius: 60px;
+            padding: 3rem;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #ac3939;
+            border: 2px dashed #cf9f9f;
+            margin-bottom: 2rem;
+        }
+        .comment-form {
+            background: white;
+            
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .rating-group {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        .rating-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f2f6fe;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .field input {
+            width: 100%;
+            padding: 1.2rem 1.8rem;
+            border: 2px solid #dee9f7;
+            border-radius: 60px;
+            font-size: 1.1rem;
+        }
+        .field input:disabled {
+            background: #f0f3f8;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .submit-btn {
+            background: #1f2e50;
+            color: white;
+            border: none;
+            padding: 1.2rem 3rem;
+            border-radius: 60px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .submit-btn:hover {
+            background: #2b3b60;
+        }
+        .submit-btn:disabled {
+            background: #95a5c3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .already-left {
+            background: #e3f0e3;
+            border-radius: 60px;
+            padding: 2rem;
+            text-align: center;
+            color: #1f7b4d;
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            border: 2px solid #a5d6a5;
+        }
+        .comments-header {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0 1rem;
+        }
+        .comment-card {
+            background: white;
+            border-radius: 40px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1rem;
+        }
+        .meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .rating-badge {
+            padding: 0.3rem 1.3rem;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+        .pos { background: #dff0e3; color: #146c3a; }
+        .neu { background: #fcf0d5; color: #9e7100; }
+        .neg { background: #ffe4e2; color: #bc3b3b; }
+        .empty-state { background: #ffffffc0; border-radius: 60px; padding: 3rem; text-align: center; }
+        .user-comment-badge {
+            background: #1f2e50;
+            color: white;
+            padding: 0.2rem 1rem;
+            
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+		h2{
+		    color: white;
+		}
+		.count{
+		    color: white;
+		}
+    </style>
+</head>
+<body>
+<div class="main">
+    <div class="top-bar">
+	    
+        <div class="iki-meter"><div style="padding: 5px; background-color:rgba(255, 0, 0, 1); border-radius: 20px 0 20px 0; height: 10px; margin-left: 0px;">  </div><span>ИКИ</span> <span id="ikiPageValue">0</span></div>
+        <div id="userSection" class="user-info"></div>
+		
+    </div>
+
+    <div id="commentFormContainer"></div>
+
+    <div class="comments-header">
+        <h2>Отзывы</h2>
+        <span class="count" id="commentsCount">0</span>
+    </div>
+    <div id="commentsList"><div class="empty-state">Загрузка...</div></div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyD2nPoa3nFbO3Y2qBWlqeE-JnWHEV0cYCE",
+        authDomain: "zorogamestoreapi.firebaseapp.com",
+        databaseURL: "https://zorogamestoreapi-default-rtdb.firebaseio.com",
+        projectId: "zorogamestoreapi",
+        storageBucket: "zorogamestoreapi.firebasestorage.app",
+        messagingSenderId: "163104730922",
+        appId: "1:163104730922:web:3bc7c1641169ab93163853"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    const PAGE_ID = new URLSearchParams(window.location.search).get('id') || 'default';
+    let currentUser = null;
+    let userAlreadyCommented = false; // Флаг: оставлял ли пользователь отзыв на этой странице
+
+    const userSection = document.getElementById('userSection');
+    const commentFormContainer = document.getElementById('commentFormContainer');
+    const ikiPageValue = document.getElementById('ikiPageValue');
+    const commentsList = document.getElementById('commentsList');
+    const commentsCountSpan = document.getElementById('commentsCount');
+
+    // Слушаем авторизацию
+    auth.onAuthStateChanged(user => {
+        currentUser = user;
+        renderTopBar(user);
+        
+        if (user) {
+            // Проверяем, оставлял ли этот пользователь отзыв на этой странице
+            checkIfUserCommented(user.uid).then(hasCommented => {
+                userAlreadyCommented = hasCommented;
+                renderCommentBlock(user, userAlreadyCommented);
+            });
+        } else {
+            renderCommentBlock(null);
+        }
+    });
+
+    // Функция проверки, оставлял ли пользователь отзыв
+    async function checkIfUserCommented(userId) {
+        const snapshot = await db.ref('comments/' + PAGE_ID)
+            .orderByChild('userId')
+            .equalTo(userId)
+            .once('value');
+        
+        return snapshot.exists(); // true если есть хотя бы один комментарий
+    }
+
+    // ИКИ страницы
+    const pageIkiRef = db.ref('pageIki/' + PAGE_ID);
+    pageIkiRef.on('value', (snap) => {
+        const iki = snap.val() || 0;
+        ikiPageValue.textContent = iki;
+    });
+
+    function renderTopBar(user) {
+        if (user) {
+            
+        } else {
+            userSection.innerHTML = `<button class="login-btn" onclick="window.location.href='auth.html'">Вход / Регистрация</button>`;
+        }
+    }
+
+    function renderCommentBlock(user, hasCommented = false) {
+        if (!user) {
+            commentFormContainer.innerHTML = `<div class="login-required">ТОЛЬКО АВТОРИЗИРОВАННЫЕ ПОЛЬЗОВАТЕЛИ МОГУТ ПИСАТЬ ОТЗЫВЫ</div>`;
+            return;
+        }
+
+        if (hasCommented) {
+            // Пользователь уже оставлял отзыв
+            commentFormContainer.innerHTML = `
+                <div class="already-left">
+                    Вы уже оставили отзыв над этим приложением<br>
+                    
+                </div>
+            `;
+            return;
+        }
+
+        // Форма для нового отзыва
+        commentFormContainer.innerHTML = `
+            <form class="comment-form" id="commentForm">
+                <div class="rating-group">
+                    <label class="rating-option"><input type="radio" name="rating" value="positive" required> <span class="pos">😊 Положительная (+10 ИКИ)</span></label>
+                    <label class="rating-option"><input type="radio" name="rating" value="neutral"> <span class="neu">😐 Нейтральная (+5 ИКИ)</span></label>
+                    <label class="rating-option"><input type="radio" name="rating" value="negative"> <span class="neg">🙁 Отрицательная (-10 ИКИ)</span></label>
+                </div>
+                <div class="field">
+                    <input type="text" id="commentText" placeholder="Ваш отзыв..." required>
+                </div>
+                <button type="submit" class="submit-btn" id="submitCommentBtn">Отправить</button>
+            </form>
+        `;
+        
+        // Блокируем кнопку отправки, чтобы избежать двойного нажатия
+        const form = document.getElementById('commentForm');
+        const submitBtn = document.getElementById('submitCommentBtn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Дополнительная проверка (на случай, если флаг не обновился)
+            if (userAlreadyCommented) {
+                alert('Вы уже оставляли отзыв на этой странице');
+                return;
+            }
+
+            // Блокируем кнопку
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправка...';
+
+            const rating = document.querySelector('input[name="rating"]:checked')?.value;
+            const text = document.getElementById('commentText').value.trim();
+            
+            if (!rating || !text) {
+                alert('Выберите оценку и напишите отзыв');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить';
+                return;
+            }
+
+            // Финальная проверка через Firebase (на случай параллельных запросов)
+            const alreadyLeft = await checkIfUserCommented(user.uid);
+            if (alreadyLeft) {
+                alert('Вы уже оставляли отзыв (обнаружено в базе)');
+                userAlreadyCommented = true;
+                renderCommentBlock(user, true);
+                return;
+            }
+
+            let ikiDelta = 0;
+            if (rating === 'positive') ikiDelta = 10;
+            else if (rating === 'neutral') ikiDelta = 5;
+            else if (rating === 'negative') ikiDelta = -10;
+
+            try {
+                // Сохраняем комментарий
+                await db.ref('comments/' + PAGE_ID).push({
+                    userId: user.uid,
+                    userName: user.displayName || 'Пользователь',
+                    rating: rating,
+                    text: text,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                // Обновляем ИКИ страницы
+                await pageIkiRef.transaction(currentIki => (currentIki || 0) + ikiDelta);
+
+                // Обновляем флаг и интерфейс
+                userAlreadyCommented = true;
+                renderCommentBlock(user, true);
+
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить';
+            }
+        });
+    }
+
+    // Загрузка комментариев
+    function loadComments() {
+        db.ref('comments/' + PAGE_ID).on('value', (snap) => {
+            const data = snap.val();
+            if (!data) {
+                commentsList.innerHTML = '<div class="empty-state">Пока нет отзывов</div>';
+                commentsCountSpan.textContent = '0';
+                return;
+            }
+            
+            const arr = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+            arr.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+            commentsCountSpan.textContent = arr.length;
+            
+            let html = '';
+            arr.forEach(c => {
+                let ratingClass = c.rating === 'positive' ? 'pos' : c.rating === 'neutral' ? 'neu' : 'neg';
+                let ratingText = c.rating === 'positive' ? 'положительная' : c.rating === 'neutral' ? 'нейтральная' : 'отрицательная';
+                
+                // Отмечаем комментарий текущего пользователя (для наглядности)
+                const isCurrentUser = currentUser && c.userId === currentUser.uid;
+                const userBadge = isCurrentUser ? '<span class="user-comment-badge">это вы</span>' : '';
+                
+                html += `
+                    <div class="comment-card">
+                        <div class="meta">
+                            <span style="font-weight:700;">${c.userName || 'Пользователь'} ${userBadge}</span>
+                            <span class="rating-badge ${ratingClass}">${ratingText}</span>
+                        </div>
+                        <div>${c.text}</div>
+                    </div>
+                `;
+            });
+            commentsList.innerHTML = html;
+        });
+    }
+
+    loadComments();
+</script>
+</body>
+</html>
