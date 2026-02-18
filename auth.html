@@ -226,7 +226,7 @@
                     displayName: defaultName 
                 });
                 errorDiv.textContent = '';
-                window.location.href = 'comments.html';
+                window.location.href = 'profile.html';
             } catch (e) {
                 errorDiv.textContent = e.message;
             }
@@ -241,7 +241,7 @@
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 errorDiv.textContent = '';
-                window.location.href = 'comments.html';
+                window.location.href = 'profile.html';
             } catch (e) {
                 errorDiv.textContent = e.message;
             }
@@ -256,3 +256,4 @@
     </script>
 </body>
 </html>
+
