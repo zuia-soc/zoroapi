@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Авторизация · ИКИ комментарии</title>
+    <title>ZGS ID</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -30,7 +30,6 @@
             max-width: 460px;
             border-radius: 56px;
             padding: 2.5rem 2rem;
-           
             border: 1px solid rgba(255,255,255,0.7);
         }
         .iki-badge {
@@ -87,7 +86,6 @@
         .form-group input:focus {
             border-color: #2f4b7c;
             outline: none;
-            
         }
         .btn {
             background: #1f2e50;
@@ -100,7 +98,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.1s;
-           
             margin-top: 1rem;
         }
         .btn:hover {
@@ -134,12 +131,13 @@
 <body>
     <div class="auth-card">
         
+        
         <div class="tabs">
             <button class="tab active" id="loginTab">Вход</button>
             <button class="tab" id="registerTab">Регистрация</button>
         </div>
 
-        
+        <!-- Форма входа -->
         <div id="loginFormBlock">
             <div class="form-group">
                 <label>Email</label>
@@ -153,9 +151,8 @@
             <button class="btn" id="loginBtn">Войти</button>
         </div>
 
-        
+        <!-- Форма регистрации (БЕЗ ПОЛЯ ИМЯ) -->
         <div id="registerFormBlock" style="display: none;">
-            
             <div class="form-group">
                 <label>Email</label>
                 <input type="email" id="regEmail" placeholder="alex@mail.ru">
@@ -168,8 +165,7 @@
             <button class="btn" id="registerBtn">Зарегистрироваться</button>
         </div>
 
-        
-        
+       
     </div>
 
     <script>
@@ -206,27 +202,28 @@
             loginBlock.style.display = 'none';
         });
 
-        // Регистрация
+        // Регистрация (БЕЗ ИМЕНИ)
         document.getElementById('registerBtn').addEventListener('click', async () => {
-            const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value.trim();
             const errorDiv = document.getElementById('regError');
 
-            if (!name || !email || password.length < 6) {
+            if (!email || password.length < 6) {
                 errorDiv.textContent = 'Заполните все поля. Пароль минимум 6 символов.';
                 return;
             }
 
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, password);
-                // Сохраняем имя в профиль пользователя
-                await cred.user.updateProfile({ displayName: name });
+                // Устанавливаем имя по умолчанию как часть email до @
+                const defaultName = email.split('@')[0] || 'Пользователь';
+                await cred.user.updateProfile({ displayName: defaultName });
+                
                 // Создаём запись в БД
                 await db.ref('users/' + cred.user.uid).set({ 
                     iki: 0, 
                     commentsCount: 0,
-                    displayName: name 
+                    displayName: defaultName 
                 });
                 errorDiv.textContent = '';
                 window.location.href = 'comments.html';
